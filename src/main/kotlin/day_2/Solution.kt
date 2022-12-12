@@ -12,9 +12,23 @@ enum class Move(val score: Int) {
         if (this == Rock && other == Scissors) return true
         return this == Scissors && other == Paper
     }
+
+    fun kryptonite() =
+        when (this) {
+            Rock -> Paper
+            Paper -> Scissors
+            Scissors -> Rock
+        }
+
+    fun defeats() =
+        when (this) {
+            Rock -> Scissors
+            Paper -> Rock
+            Scissors -> Paper
+        }
 }
 
-data class Event(val opponent: Move, val you: Move) {
+private data class Event(val opponent: Move, val you: Move) {
 
     fun score(): Int {
         if (opponent.defeats(you)) {
@@ -26,7 +40,7 @@ data class Event(val opponent: Move, val you: Move) {
     }
 }
 
-fun createMove(str: String) =
+private fun createMove(str: String) =
     when (str) {
         "A", "X" -> Move.Rock
         "B", "Y" -> Move.Paper
@@ -36,7 +50,7 @@ fun createMove(str: String) =
         }
     }
 
-fun String.toEvent(): Event {
+private fun String.toEvent(): Event {
     val pieces = this.split(" ")
     val opponent = createMove(pieces[0])
     val you = createMove(pieces[1])
