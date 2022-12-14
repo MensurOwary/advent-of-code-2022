@@ -6,8 +6,11 @@ import java.util.Stack
 
 val MOVE_PATTERN_REGEX = Regex("move (\\d+) from (\\d+) to (\\d+)")
 
-fun createEachStack(stackStrings: List<String>, stackCount: Int): List<Stack<String>> {
-    val stacks = IntRange(0, stackCount - 1).map { Stack<String>() }
+typealias Crate = String
+typealias Crates = Stack<Crate>
+
+fun createEachStack(stackStrings: List<String>, stackCount: Int): List<Crates> {
+    val stacks = (0 until stackCount).map { Crates() }
     for (line in stackStrings.reversed()) {
         for (i in 0 until stackCount) {
             try {
@@ -25,38 +28,23 @@ fun createEachStack(stackStrings: List<String>, stackCount: Int): List<Stack<Str
     return stacks
 }
 
-fun simulatePartOne(stacks: List<Stack<String>>, moves: List<Move>) {
-    for (move in moves) {
-        for (i in 1..move.count) {
-            stacks[move.to].push(stacks[move.from].pop())
-        }
-    }
-
-    val result = stacks.joinToString(separator = ""){
+fun simulate(
+    lines: List<String>,
+    moveAction: (stacks: List<Crates>, moves: List<Move>) -> List<Crates>
+): String {
+    // determine the number of stacks
+    val dividerIndex = lines.indexOfFirst { it.isBlank() }
+    val stackCount = lines[dividerIndex - 1].trim().split(Regex("\\s+")).last().toInt()
+    // create each stack
+    // parse moves
+    val moves = parseMoves(lines.subList(dividerIndex + 1, lines.size))
+    val stacks = createEachStack(lines.subList(0, stackCount), stackCount)
+    val modifiedStacks = moveAction(stacks, moves)
+    return modifiedStacks.joinToString(separator = "") {
         if (it.isEmpty()) "" else it.peek()
     }
-
-    println("Part 1 Result: $result")
 }
 
-fun simulatePartTwo(stacks: List<Stack<String>>, moves: List<Move>) {
-    for (move in moves) {
-        val tempStack = Stack<String>()
-        for (i in 1..move.count) {
-            tempStack.push(stacks[move.from].pop())
-        }
-
-        while (!tempStack.isEmpty()) {
-            stacks[move.to].push(tempStack.pop())
-        }
-    }
-
-    val result = stacks.joinToString(separator = ""){
-        if (it.isEmpty()) "" else it.peek()
-    }
-
-    println("Part 2 Result: $result")
-}
 
 data class Move(private val matches: List<Int>) {
     val from = matches[1] - 1 // adjust to the zero-based index
@@ -65,7 +53,7 @@ data class Move(private val matches: List<Int>) {
 }
 
 fun parseMoves(subList: List<String>): List<Move> {
-    return subList.map {moveString ->
+    return subList.map { moveString ->
         val matchResult = MOVE_PATTERN_REGEX.findAll(moveString).first()
         Move(matchResult.groupValues.drop(1).map { it.toInt() })
     }
@@ -75,15 +63,31 @@ fun main() {
     val inputFile = Path.of("src/main/kotlin/day_5/input")
     val lines = Files.readAllLines(inputFile)
 
-    // determine the number of stacks
-    val dividerIndex = lines.indexOfFirst { it.isBlank() }
-    val stackCount = lines[dividerIndex - 1].trim().split(Regex("\\s+")).last().toInt()
-    // create each stack
-    // parse moves
-    val moves = parseMoves(lines.subList(dividerIndex + 1, lines.size))
     // simulate
-    simulatePartOne(createEachStack(lines.subList(0, stackCount), stackCount), moves)
-    simulatePartTwo(createEachStack(lines.subList(0, stackCount), stackCount), moves)
+    val resultPart1 = simulate(lines) { stacks, moves ->
+        for (move in moves) {
+            for (i in 1..move.count) {
+                stacks[move.to].push(stacks[move.from].pop())
+            }
+        }
+        stacks
+    }
+    println("Result Part 1: $resultPart1")
+
+    val resultPart2 = simulate(lines) { stacks, moves ->
+        for (move in moves) {
+            val tempStack = Crates()
+            for (i in 1..move.count) {
+                tempStack.push(stacks[move.from].pop())
+            }
+
+            while (!tempStack.isEmpty()) {
+                stacks[move.to].push(tempStack.pop())
+            }
+        }
+        stacks
+    }
+    println("Result Part 1: $resultPart2")
 }
 
 
