@@ -25,7 +25,7 @@ fun createEachStack(stackStrings: List<String>, stackCount: Int): List<Stack<Str
     return stacks
 }
 
-fun simulate(stacks: List<Stack<String>>, moves: List<Move>) {
+fun simulatePartOne(stacks: List<Stack<String>>, moves: List<Move>) {
     for (move in moves) {
         for (i in 1..move.count) {
             stacks[move.to].push(stacks[move.from].pop())
@@ -36,7 +36,26 @@ fun simulate(stacks: List<Stack<String>>, moves: List<Move>) {
         if (it.isEmpty()) "" else it.peek()
     }
 
-    println("Result: $result")
+    println("Part 1 Result: $result")
+}
+
+fun simulatePartTwo(stacks: List<Stack<String>>, moves: List<Move>) {
+    for (move in moves) {
+        val tempStack = Stack<String>()
+        for (i in 1..move.count) {
+            tempStack.push(stacks[move.from].pop())
+        }
+
+        while (!tempStack.isEmpty()) {
+            stacks[move.to].push(tempStack.pop())
+        }
+    }
+
+    val result = stacks.joinToString(separator = ""){
+        if (it.isEmpty()) "" else it.peek()
+    }
+
+    println("Part 2 Result: $result")
 }
 
 data class Move(private val matches: List<Int>) {
@@ -60,11 +79,11 @@ fun main() {
     val dividerIndex = lines.indexOfFirst { it.isBlank() }
     val stackCount = lines[dividerIndex - 1].trim().split(Regex("\\s+")).last().toInt()
     // create each stack
-    val stacks = createEachStack(lines.subList(0, stackCount), stackCount)
     // parse moves
     val moves = parseMoves(lines.subList(dividerIndex + 1, lines.size))
     // simulate
-    simulate(stacks, moves)
+    simulatePartOne(createEachStack(lines.subList(0, stackCount), stackCount), moves)
+    simulatePartTwo(createEachStack(lines.subList(0, stackCount), stackCount), moves)
 }
 
 
