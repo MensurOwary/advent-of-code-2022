@@ -26,19 +26,9 @@ data class IndexPair(val row: Int, val col: Int, val len: Int) {
 
 fun Int.isVisible(range: Range, matrix: List<List<Int>>): Boolean {
     val values = when (range) {
-        is RowRange -> {
-            sequence {
-                range.range.map { yield(matrix[it][range.col]) }
-            }
-        }
-
-        is ColRange -> {
-            sequence {
-                range.range.map { yield(matrix[range.row][it]) }
-            }
-        }
+        is RowRange -> range.range.map { matrix[it][range.col] }
+        is ColRange -> range.range.map { matrix[range.row][it] }
     }
-
     val max = values.maxOrNull() ?: Int.MIN_VALUE
     return max < this
 }
@@ -53,25 +43,13 @@ inline fun <T> Iterable<T>.takeWhileIncludeLastFailed(predicate: (T) -> Boolean)
     return list
 }
 
-fun Int.scenicScore(range: Range, matrix: List<List<Int>>): Int {
-    val number = this
-    return when (range) {
-        is RowRange -> {
-            sequence {
-                range.range.takeWhileIncludeLastFailed { matrix[it][range.col] < number }.forEach { yield(it) }
-            }
-        }
-
-        is ColRange -> {
-            sequence {
-                range.range.takeWhileIncludeLastFailed { matrix[range.row][it] < number }.forEach { yield(it) }
-            }
-        }
+fun Int.scenicScore(range: Range, matrix: Matrix): Int =
+    when (range) {
+        is RowRange -> range.range.takeWhileIncludeLastFailed { matrix[it][range.col] < this }
+        is ColRange -> range.range.takeWhileIncludeLastFailed { matrix[range.row][it] < this }
     }.count()
-}
 
 fun Matrix.crossProductIndices(): List<IndexPair> {
-//    return listOf(IndexPair(1, 2, 5))
     return indices.flatMap { row -> indices.map { col -> IndexPair(row, col, size) } }
 }
 
@@ -79,17 +57,17 @@ fun main() {
     val inputFile = Path.of("src/main/kotlin/day_8/input")
     val lines = Files.readAllLines(inputFile)
 
-    val matrix = lines.map { it.chars().map { s -> s - 48 }.toList() } as Matrix
+    val matrix: Matrix = lines.map { it.chars().map { s -> s - 48 }.toList() }
 
-    val result = matrix.crossProductIndices()
+    val resultPart1 = matrix.crossProductIndices()
         .count { pair ->
             val number = matrix[pair.row][pair.col]
             pair.getNeighbors().any { number.isVisible(it, matrix) }
         }
 
-    println("Result Part 1: $result")
+    println("Result Part 1: $resultPart1")
 
-    val result1 = matrix.crossProductIndices()
+    val resultPartTwo = matrix.crossProductIndices()
         .maxOfOrNull { pair ->
             val number = matrix[pair.row][pair.col]
             pair.getNeighbors()
@@ -97,5 +75,5 @@ fun main() {
                 .reduce { acc, i -> acc * i }
         }
 
-    println("Result Part 2: $result1")
+    println("Result Part 2: $resultPartTwo")
 }
